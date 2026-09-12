@@ -1,0 +1,22 @@
+# Secrets & environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Build caches
+dist/
+build/
+.cache/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
