@@ -1,6 +1,8 @@
-# Paige · Web AI NPC Demo
+# Paige · 便利贴猫（AI Sticky-Note Companion）
 
-A zero-dependency Node + Three.js web demo built around the supplied OBJ character.
+A zero-dependency Node + Three.js web demo built around the supplied 3D cat character.
+Paige listens to your scattered thoughts, extracts actionable tasks, and pins them
+as sticky notes on an Eisenhower Matrix board (DO NOW / PLAN / QUICK / SOMEDAY).
 
 ## Run locally
 
@@ -14,9 +16,10 @@ node server.mjs
 
 4. Open `http://localhost:4321`.
 
-No API key is required for the UI demo. The server returns a small set of scripted NPC replies until a key is configured.
+No API key is required for the UI demo. The server returns a small set of scripted
+Paige replies until a key is configured.
 
-## Enable real AI dialogue
+## Enable real AI classification
 
 Copy `.env.example` to `.env` and set:
 
@@ -32,20 +35,20 @@ The API key stays on the Node server and is never exposed to browser JavaScript.
 
 ## Included interaction
 
-- supplied OBJ model, using its embedded vertex colors
-- drag to rotate / wheel to zoom / reset camera
-- subtle idle floating motion
-- streaming-style dialogue state
-- AI or offline demo dialogue
-- conversation history within the current session
-- browser speech-to-text where supported
-- browser text-to-speech for NPC replies
+- 3D cat character (GLB) with idle animation
+- chat panel with emotion stickers and voice input
+- sticky-note board with four Eisenhower quadrants
+- Paige classifies each task by importance/urgency, marks low-confidence guesses,
+  and occasionally adds a short handwritten annotation
+- notes persist in `localStorage`; click a note to mark it done, ✕ to remove, 清空 to reset
 - responsive desktop/mobile layout
 
 ## Character prompt
 
-Edit `NPC_INSTRUCTIONS` in `server.mjs` to change Paige's identity, lore, tone, speaking style, quest logic, or game-world rules.
+Edit `NPC_INSTRUCTIONS` in `server.mjs` to change Paige's persona, classification
+rules, or the structured JSON contract (`reply` / `emotion` / `notes[]`).
 
 ## Production notes
 
-The supplied OBJ is very large (~90 MB). For a public site, convert/decimate it to GLB/GLTF and optionally use Draco/Meshopt compression. This will dramatically improve first-load time.
+The supplied OBJ/GLB models are large (75–90 MB). For a public site, decimate and
+compress them (Draco/Meshopt) to improve first-load time.

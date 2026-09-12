@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Paige · AI NPC</title>
+  <title>Paige · 便利贴猫</title>
   <link rel="stylesheet" href="/style.css" />
   <script type="importmap">
   {
@@ -18,6 +18,7 @@
   <main class="shell">
     <section class="world" id="world">
       <div class="noise"></div>
+      <div class="brand"><span class="sigil">✦</span> Paige的便利贴</div>
       <div class="model-wrap" id="modelWrap">
         <div class="loader" id="loader"><div class="orb"></div><span>召唤角色中…</span><small id="loadDetail">载入 3D 模型</small></div>
       </div>
@@ -29,43 +30,31 @@
         <span class="sb-deco sb-spark1">✦</span>
         <span class="sb-deco sb-spark2">✧</span>
       </div>
-    </section>
-
-    <section class="dialogue">
-      <header class="dialogue-head">
-        <div class="head-id">
-          <img class="head-avatar" src="/stickers/t-happy.png" alt="">
-          <div>
-            <span class="eyebrow">LIVE CONVERSATION</span>
-            <h2>和 Paige 说话</h2>
-            <p class="head-sub">在这里，慢慢说就好。</p>
-          </div>
-        </div>
-        <div class="presence-wrap">
-          <button id="ttsToggle" class="icon-btn tts-btn" title="语音开关" aria-label="Toggle speech">🔊</button>
-          <div class="presence"><span></span> 在线</div>
-        </div>
-      </header>
-
-      <div class="messages" id="messages" aria-live="polite">
-        <article class="msg npc">
-          <div class="avatar"><img class="avatar-img" src="/stickers/t-greet.png" alt=""></div>
-          <div><span class="speaker">PAIGE</span><p>你终于来了。这里的地图不会告诉所有人同一条路——它更喜欢先观察旅人。<br>今天，你想找一个地方，还是想找一个答案？</p></div>
-        </article>
-      </div>
-
-      <div class="suggestions" id="suggestions">
-        <button>你是谁？</button><button>这里是什么地方？</button><button>给我一个任务</button>
+      <div class="notes-layer" id="notesLayer"></div>
+      <div class="board-legend">
+        <span class="lg lg-donow">🔥 先做</span><span class="lg lg-plan">🌱 计划</span><span class="lg lg-quick">⚡ 速办</span><span class="lg lg-someday">☁️ 改天</span>
+        <button id="clearBoard" class="clear-btn" title="清空全部便签">清空</button>
       </div>
 
       <form class="composer" id="composer">
-        <button type="button" class="mic" id="mic" title="语音输入">⌁</button>
-        <textarea id="input" rows="1" placeholder="对 Paige 说点什么…" maxlength="2000"></textarea>
-        <button class="send" id="send" type="submit" aria-label="Send">➜</button>
+        <button type="button" class="mic" id="mic" title="语音输入">🐾</button>
+        <textarea id="input" rows="1" placeholder="对 Paige 说说最近的事…" maxlength="2000"></textarea>
+        <button class="send" id="send" type="submit" aria-label="Send">➤</button>
       </form>
-      <div class="footer-line"><span id="modeText">DEMO MODE</span><span>ENTER 发送 · SHIFT+ENTER 换行</span></div>
+      <div class="footer-line"><span id="modeText">本地模式</span><span>ENTER 发送 · SHIFT+ENTER 换行</span></div>
+
+      <!-- 聊天记录保留但不可见（场景气泡已承担回复展示） -->
+      <div class="messages" id="messages" hidden></div>
     </section>
   </main>
+
+  <!-- 油画风格化滤镜：湍流位移模拟笔触 -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="oilPaint" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.011 0.017" numOctaves="2" seed="7" result="warp"/>
+      <feDisplacementMap in="SourceGraphic" in2="warp" scale="13" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
   <script type="module" src="/app.js"></script>
 </body>
 </html>
