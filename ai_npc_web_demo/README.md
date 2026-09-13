@@ -52,3 +52,20 @@ rules, or the structured JSON contract (`reply` / `emotion` / `notes[]`).
 
 The supplied OBJ/GLB models are large (75–90 MB). For a public site, decimate and
 compress them (Draco/Meshopt) to improve first-load time.
+
+## Deploy to Cloudflare Pages
+
+The repo is ready for Cloudflare Pages (static hosting + Pages Function for `/api/chat`):
+
+1. In the Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git**, pick this repository.
+2. Build settings:
+   - **Root directory**: `ai_npc_web_demo`
+   - **Build command**: *(leave empty)*
+   - **Build output directory**: `public`
+3. Deploy. The site works out of the box in demo mode (local rule engine).
+4. Optional — real AI replies: **Settings → Environment variables**, add `OPENAI_API_KEY` (and optionally `OPENAI_MODEL`).
+5. Custom domain: **Custom domains → Set up a domain**, enter your domain (e.g. `paigememo.com`). If the domain's DNS is on Cloudflare, it is verified automatically; otherwise follow the shown DNS records.
+
+Notes:
+- Models are meshopt-compressed (`gltfpack -cc`) to stay under the Pages 25 MB per-file limit: `character.glb` 15 MB, `desk.glb` 6.3 MB.
+- `functions/api/chat.js` is a dependency-free port of `server.mjs`; both stay in sync manually.
