@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 
@@ -50,7 +50,7 @@ let mixer = null;
 function fit(){const w=wrap.clientWidth,h=wrap.clientHeight; camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h,false)}
 new ResizeObserver(fit).observe(wrap); fit();
 
-new GLTFLoader().load('/character.glb', gltf => {
+new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load('/character.glb', gltf => {
   character = gltf.scene;
   const box = new THREE.Box3().setFromObject(character); const size = box.getSize(new THREE.Vector3()); const center = box.getCenter(new THREE.Vector3());
   // 水平居中，整体微微下移，让猫稳稳踩在地面上
@@ -90,17 +90,17 @@ new GLTFLoader().load('/character.glb', gltf => {
   else loadDetail.textContent=`已载入 ${(xhr.loaded/1024/1024).toFixed(0)} MB`;
 }, err => { console.error(err); loadDetail.textContent='模型载入失败，请刷新重试'; });
 
-// ===== 悬浮书桌：放在猫的前方（顶点色 OBJ，绘本风哑光材质） =====
+// ===== 悬浮书桌：放在猫的前方（顶点色 GLB，gltfpack 压缩，绘本风哑光材质） =====
 let desk = null;
 function loadDesk(){
   const catHeight = new THREE.Box3().setFromObject(character).getSize(new THREE.Vector3()).y;
-  new OBJLoader().load('/desk.obj', obj => {
-    desk = obj;
+  new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load('/desk.glb', gltf => {
+    desk = gltf.scene;
     const mat = new THREE.MeshToonMaterial({
       vertexColors: true,
       gradientMap: toonGradient
     });
-    desk.traverse(child => { if (child.isMesh) { child.material = mat;
+    desk.traverse(child => { if (child.isMesh) { if (!child.geometry.attributes.normal) child.geometry.computeVertexNormals(); child.material = mat;
       const jitter = ((child.id * 2654435761) % 100) / 100;
       child.userData.outlineParameters = { thickness: 0.0008 + jitter * 0.0022, color: [0.03, 0.015, 0.08], alpha: 0.72, visible: true }; } });
     // 桌子放大前倾，覆盖整个画面底部，猫在桌后露出上半身
