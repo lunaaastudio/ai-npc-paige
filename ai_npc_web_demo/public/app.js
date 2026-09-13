@@ -4,6 +4,64 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 
+// ===== i18n：中英双语切换（默认跟随浏览器语言，localStorage 记忆选择） =====
+const I18N = {
+  zh: {
+    title: 'Paige · 便利贴猫',
+    brand: 'Paige的便利贴',
+    loading: '召唤角色中…',
+    legendDonow: '🔥 先做', legendPlan: '🌱 计划', legendQuick: '⚡ 速办', legendSomeday: '☁️ 改天',
+    clear: '清空', clearTitle: '清空全部便签',
+    micTitle: '语音输入',
+    placeholder: '对 Paige 说说最近的事…',
+    footerHint: 'ENTER 发送 · SHIFT+ENTER 换行',
+    modeLocal: '本地模式 · 无需 API KEY',
+    greeting: '喵，我是 Paige。把乱糟糟的事说给我听，我帮你贴到这面墙上。',
+    typing: '正在整理成便利贴…',
+    notesDone: '（便签贴好了）',
+    connLost: '连接似乎断了：',
+    lowConf: 'Paige 不太确定这个分类',
+    tear: '撕掉',
+    cleared: '墙上的便签都撕掉了。重新开始吧。',
+    noSpeech: '当前浏览器不支持语音识别',
+    loadingDetail: '载入 3D 模型',
+    modelPct: p => `3D 模型 ${p}%`,
+    modelMB: mb => `已载入 ${mb} MB`,
+    modelFail: '模型载入失败，请刷新重试',
+    animClip: n => `动画：${n}`
+  },
+  en: {
+    title: "Paige's Memo · Sticky-note Cat",
+    brand: "Paige's Memo",
+    loading: 'Summoning Paige…',
+    legendDonow: '🔥 Do now', legendPlan: '🌱 Plan', legendQuick: '⚡ Quick', legendSomeday: '☁️ Someday',
+    clear: 'Clear', clearTitle: 'Remove all sticky notes',
+    micTitle: 'Voice input',
+    placeholder: "Tell Paige what's on your mind…",
+    footerHint: 'ENTER to send · SHIFT+ENTER for new line',
+    modeLocal: 'Local mode · No API key needed',
+    greeting: "Meow, I'm Paige. Tell me the messy things on your mind and I'll pin them to this wall.",
+    typing: 'Sorting into sticky notes…',
+    notesDone: '(Notes pinned up)',
+    connLost: 'Connection seems lost: ',
+    lowConf: 'Paige is not sure about this quadrant',
+    tear: 'Tear off',
+    cleared: 'All notes torn off the wall. Fresh start!',
+    noSpeech: 'Speech recognition is not supported in this browser',
+    loadingDetail: 'Loading 3D model',
+    modelPct: p => `3D model ${p}%`,
+    modelMB: mb => `Loaded ${mb} MB`,
+    modelFail: 'Failed to load model, please refresh',
+    animClip: n => `Animation: ${n}`
+  }
+};
+let LANG = localStorage.getItem('paige_lang') || ((navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en');
+function t(k) {
+  const v = I18N[LANG][k] ?? I18N.zh[k];
+  return typeof v === 'function' ? v : (v ?? k);
+}
+function tf(k, ...args) { const v = t(k); return typeof v === 'function' ? v(...args) : v; }
+
 const wrap = document.getElementById('modelWrap');
 const loaderEl = document.getElementById('loader');
 const loadDetail = document.getElementById('loadDetail');
@@ -79,16 +137,16 @@ new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load('/character.glb', gltf =
     mixer = new THREE.AnimationMixer(character);
     const action = mixer.clipAction(gltf.animations[0]);
     action.setLoop(THREE.LoopRepeat).play();
-    loadDetail.textContent = `动画：${gltf.animations[0].name || 'clip 1'}`;
+    loadDetail.textContent = tf('animClip', gltf.animations[0].name || 'clip 1');
     // 该动画预设整体转向侧面 90°，用固定旋转把正脸转向镜头
     character.rotation.y = -Math.PI / 2;
   }
   loaderEl.classList.add('done');
-  showBubble('喵，我是 Paige。把乱糟糟的事说给我听，我帮你贴到这面墙上。','greet',false,9000);
+  showBubble(t('greeting'),'greet',false,9000);
 }, xhr => {
-  if(xhr.total){ const pct=Math.min(99,Math.round(xhr.loaded/xhr.total*100)); loadDetail.textContent=`3D 模型 ${pct}%`; }
-  else loadDetail.textContent=`已载入 ${(xhr.loaded/1024/1024).toFixed(0)} MB`;
-}, err => { console.error(err); loadDetail.textContent='模型载入失败，请刷新重试'; });
+  if(xhr.total){ const pct=Math.min(99,Math.round(xhr.loaded/xhr.total*100)); loadDetail.textContent=tf('modelPct', pct); }
+  else loadDetail.textContent=tf('modelMB', (xhr.loaded/1024/1024).toFixed(0));
+}, err => { console.error(err); loadDetail.textContent=t('modelFail'); });
 
 // ===== 悬浮书桌：放在猫的前方（顶点色 GLB，gltfpack 压缩，绘本风哑光材质） =====
 let desk = null;
@@ -178,8 +236,8 @@ const messagesEl=document.getElementById('messages'); const form=document.getEle
 const history=[];
 function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function addMessage(role,text,typing=false,emotion=null){const el=document.createElement('article'); el.className=`msg ${role==='assistant'?'npc':'user'}${typing?' typing':''}`; const av=role==='assistant'?`<img class="avatar-img" src="/stickers/t-${emotion&&/^[a-z]+$/.test(emotion)?emotion:'default'}.png" alt="">`:'Y'; el.innerHTML=`<div class="avatar">${av}</div><div><span class="speaker">${role==='assistant'?'PAIGE':'YOU'}</span><p>${esc(text).replace(/\n/g,'<br>')}</p></div>`; messagesEl.appendChild(el); messagesEl.scrollTop=messagesEl.scrollHeight; return el}
-async function ask(text){text=text.trim();if(!text)return; addMessage('user',text); history.push({role:'user',content:text}); input.value=''; resizeInput(); send.disabled=true; const typing=addMessage('assistant','正在整理成便利贴',true); showBubble('正在整理成便利贴…','thinking',true);
-  try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})}); const data=await r.json(); if(!r.ok)throw new Error(data.error||'Request failed'); typing.remove(); if(data.reply){addMessage('assistant',data.reply,false,data.emotion); history.push({role:'assistant',content:data.reply})} if(Array.isArray(data.notes)&&data.notes.length)addNotes(data.notes); mode.textContent=data.demo?'本地模式 · 无需 API KEY':`LIVE AI · ${data.model||''}`; showBubble(data.reply||'（便签贴好了）',data.emotion,false,12000)}catch(e){typing.remove();addMessage('assistant',`连接似乎断了：${e.message}`); showBubble(`连接似乎断了：${e.message}`,'sad',false,6000)}finally{send.disabled=false; input.focus()}}
+async function ask(text){text=text.trim();if(!text)return; addMessage('user',text); history.push({role:'user',content:text}); input.value=''; resizeInput(); send.disabled=true; const typing=addMessage('assistant',t('typing'),true); showBubble(t('typing'),'thinking',true);
+  try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})}); const data=await r.json(); if(!r.ok)throw new Error(data.error||'Request failed'); typing.remove(); if(data.reply){addMessage('assistant',data.reply,false,data.emotion); history.push({role:'assistant',content:data.reply})} if(Array.isArray(data.notes)&&data.notes.length)addNotes(data.notes); mode.dataset.demo=data.demo?'1':'0'; mode.textContent=data.demo?t('modeLocal'):`LIVE AI · ${data.model||''}`; showBubble(data.reply||t('notesDone'),data.emotion,false,12000)}catch(e){typing.remove();addMessage('assistant',t('connLost')+e.message); showBubble(t('connLost')+e.message,'sad',false,6000)}finally{send.disabled=false; input.focus()}}
 
 // --- In-scene speech bubble ---
 const sceneBubble=document.getElementById('sceneBubble'), sbAvatar=document.getElementById('sbAvatar'), sbText=document.getElementById('sbText');
@@ -197,7 +255,7 @@ document.querySelectorAll('#suggestions button').forEach(b=>b.onclick=()=>ask(b.
 
 // Optional voice input in Chromium browsers.
 const mic=document.getElementById('mic'); const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SpeechRecognition){const rec=new SpeechRecognition();rec.lang='zh-CN';rec.interimResults=false;rec.onstart=()=>mic.classList.add('listening');rec.onend=()=>mic.classList.remove('listening');rec.onresult=e=>{input.value=e.results[0][0].transcript;resizeInput();input.focus()};mic.onclick=()=>rec.start()}else{mic.style.opacity=.35;mic.title='当前浏览器不支持语音识别'}
+if(SpeechRecognition){const rec=new SpeechRecognition();window.__rec=rec;rec.lang=LANG==='zh'?'zh-CN':'en-US';rec.interimResults=false;rec.onstart=()=>mic.classList.add('listening');rec.onend=()=>mic.classList.remove('listening');rec.onresult=e=>{input.value=e.results[0][0].transcript;resizeInput();input.focus()};mic.onclick=()=>rec.start()}else{mic.style.opacity=.35;mic.title=t('noSpeech')}
 // --- Sticky notes pinned directly on the world background, persisted in localStorage ---
 const NOTE_KEY = 'taotao_notes_v1';
 const notesLayer = document.getElementById('notesLayer');
@@ -251,8 +309,8 @@ function makeSticky(note){
   const emo = QUAD_EMOJI[note.quadrant] || 't-default';
   let inner = `${attach}<img class="sticky-emoji" src="/stickers/${emo}.png" alt=""><p class="sticky-title">${esc(note.title)}</p>`;
   if (note.annotation) inner += `<p class="sticky-note">${esc(note.annotation)}</p>`;
-  if (note.confidence === 'low') inner += `<span class="low-conf" title="Paige 不太确定这个分类">?</span>`;
-  inner += `<button class="sticky-del" title="撕掉">✕</button>`;
+  if (note.confidence === 'low') inner += `<span class="low-conf" title="${esc(t('lowConf'))}">?</span>`;
+  inner += `<button class="sticky-del" title="${esc(t('tear'))}">✕</button>`;
   el.innerHTML = inner;
   el.querySelector('.sticky-title').onclick = () => {
     if (el.dataset.dragged === '1') { el.dataset.dragged = ''; return; } // 拖动后的抬起不算点击
@@ -323,7 +381,7 @@ function fitNote(el){
 window.addEventListener('resize', renderAll);   // 窗口尺寸变化时重新收敛
 
 // UI 元素上的按下不传给场景旋转（OrbitControls 挂在 .world 上，setPointerCapture 会吃掉 click）
-for (const sel of ['.board-legend', '.composer', '.footer-line', '.scene-bubble', '.brand']) {
+for (const sel of ['.board-legend', '.composer', '.footer-line', '.scene-bubble', '.brand', '.lang-toggle']) {
   const uiEl = document.querySelector(sel);
   if (uiEl) uiEl.addEventListener('pointerdown', e => e.stopPropagation());
 }
@@ -348,6 +406,26 @@ function addNotes(incoming){
 document.getElementById('clearBoard').onclick = () => {
   if (!notes.length) return;
   notes = []; saveNotes(); renderAll();
-  showBubble('墙上的便签都撕掉了。重新开始吧。', 'happy', false, 5000);
+  showBubble(t('cleared'), 'happy', false, 5000);
 };
-renderAll();
+
+// ===== 应用语言：刷新所有静态文案 + 重渲染便签（tooltip 随语言更新） =====
+const langToggle = document.getElementById('langToggle');
+function applyLang(){
+  document.documentElement.lang = LANG === 'zh' ? 'zh-CN' : 'en';
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  langToggle.textContent = LANG === 'zh' ? 'EN' : '中';
+  if (!loaderEl.classList.contains('done')) loadDetail.textContent = t('loadingDetail');
+  if (window.__rec) window.__rec.lang = LANG === 'zh' ? 'zh-CN' : 'en-US';
+  if (mode.dataset.demo !== '0') mode.textContent = t('modeLocal');
+  renderAll();
+}
+langToggle.onclick = () => {
+  LANG = LANG === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('paige_lang', LANG);
+  applyLang();
+};
+applyLang();

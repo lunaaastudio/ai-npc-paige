@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Paige · 便利贴猫</title>
+  <title data-i18n="title">Paige · 便利贴猫</title>
   <link rel="stylesheet" href="/style.css" />
   <script type="importmap">
   {
@@ -18,9 +18,10 @@
   <main class="shell">
     <section class="world" id="world">
       <div class="noise"></div>
-      <div class="brand"><span class="sigil">✦</span> Paige的便利贴</div>
+      <div class="brand"><span class="sigil">✦</span> <span data-i18n="brand">Paige的便利贴</span></div>
+      <button class="lang-toggle" id="langToggle" type="button" title="Switch language / 切换语言">EN</button>
       <div class="model-wrap" id="modelWrap">
-        <div class="loader" id="loader"><div class="orb"></div><span>召唤角色中…</span><small id="loadDetail">载入 3D 模型</small></div>
+        <div class="loader" id="loader"><div class="orb"></div><span data-i18n="loading">召唤角色中…</span><small id="loadDetail">载入 3D 模型</small></div>
       </div>
       <div class="scene-bubble hidden" id="sceneBubble">
         <img class="sb-avatar" id="sbAvatar" src="/stickers/t-greet.png" alt="">
@@ -32,16 +33,16 @@
       </div>
       <div class="notes-layer" id="notesLayer"></div>
       <div class="board-legend">
-        <span class="lg lg-donow">🔥 先做</span><span class="lg lg-plan">🌱 计划</span><span class="lg lg-quick">⚡ 速办</span><span class="lg lg-someday">☁️ 改天</span>
-        <button id="clearBoard" class="clear-btn" title="清空全部便签">清空</button>
+        <span class="lg lg-donow" data-i18n="legendDonow">🔥 先做</span><span class="lg lg-plan" data-i18n="legendPlan">🌱 计划</span><span class="lg lg-quick" data-i18n="legendQuick">⚡ 速办</span><span class="lg lg-someday" data-i18n="legendSomeday">☁️ 改天</span>
+        <button id="clearBoard" class="clear-btn" data-i18n="clear" data-i18n-title="clearTitle" title="清空全部便签">清空</button>
       </div>
 
       <form class="composer" id="composer">
-        <button type="button" class="mic" id="mic" title="语音输入">🐾</button>
-        <textarea id="input" rows="1" placeholder="对 Paige 说说最近的事…" maxlength="2000"></textarea>
+        <button type="button" class="mic" id="mic" data-i18n-title="micTitle" title="语音输入">🐾</button>
+        <textarea id="input" rows="1" data-i18n-ph="placeholder" placeholder="对 Paige 说说最近的事…" maxlength="2000"></textarea>
         <button class="send" id="send" type="submit" aria-label="Send">➤</button>
       </form>
-      <div class="footer-line"><span id="modeText">本地模式</span><span>ENTER 发送 · SHIFT+ENTER 换行</span></div>
+      <div class="footer-line"><span id="modeText">本地模式</span><span data-i18n="footerHint">ENTER 发送 · SHIFT+ENTER 换行</span></div>
 
       <!-- 聊天记录保留但不可见（场景气泡已承担回复展示） -->
       <div class="messages" id="messages" hidden></div>
