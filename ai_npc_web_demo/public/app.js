@@ -67,7 +67,7 @@ const loaderEl = document.getElementById('loader');
 const loadDetail = document.getElementById('loadDetail');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
-camera.position.set(0, .73, 2.55);
+camera.position.set(0, .60, 2.55);
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
