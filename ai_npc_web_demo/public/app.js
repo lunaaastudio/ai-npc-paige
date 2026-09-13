@@ -28,7 +28,16 @@ const I18N = {
     modelPct: p => `3D 模型 ${p}%`,
     modelMB: mb => `已载入 ${mb} MB`,
     modelFail: '模型载入失败，请刷新重试',
-    animClip: n => `动画：${n}`
+    animClip: n => `动画：${n}`,
+    creatorBtn: '🎨 创作者',
+    creatorTitle: '✦ Creator Mode',
+    creatorSub: '用便签拼出喜欢的形状',
+    tplHeart: '爱心 ♡', tplHeartDesc: '每天多一点点爱 ♡',
+    tplPaw: '猫爪 🐾', tplPawDesc: '献给所有爱猫的人（和 Paige）',
+    tplP: "Paige 的 P ✦", tplPDesc: '用便签拼出你的名字',
+    tplBlank: '空白画布', tplBlankDesc: '自由自在，随意贴',
+    useTpl: '使用模板 →', tplActive: '✓ 使用中',
+    tplSwitched: '好嘞，接下来的便签就按这个形状贴。',
   },
   en: {
     title: "Paige's Memo · Sticky-note Cat",
@@ -52,7 +61,16 @@ const I18N = {
     modelPct: p => `3D model ${p}%`,
     modelMB: mb => `Loaded ${mb} MB`,
     modelFail: 'Failed to load model, please refresh',
-    animClip: n => `Animation: ${n}`
+    animClip: n => `Animation: ${n}`,
+    creatorBtn: '🎨 Creator',
+    creatorTitle: '✦ Creator Mode',
+    creatorSub: 'Build the shape with sticky notes',
+    tplHeart: 'Heart ♡', tplHeartDesc: 'A little more love every day ♡',
+    tplPaw: 'Cat Paw 🐾', tplPawDesc: 'For all the cat lovers (and Paige too)',
+    tplP: "Paige's P ✦", tplPDesc: 'Make it yours with notes',
+    tplBlank: 'Blank Canvas', tplBlankDesc: 'Free-style, pin anywhere',
+    useTpl: 'Use Template →', tplActive: '✓ Active',
+    tplSwitched: 'Got it — new notes will build this shape.',
   }
 };
 let LANG = localStorage.getItem('paige_lang') || ((navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en');
@@ -259,27 +277,108 @@ if(SpeechRecognition){const rec=new SpeechRecognition();window.__rec=rec;rec.lan
 // --- Sticky notes pinned directly on the world background, persisted in localStorage ---
 const NOTE_KEY = 'taotao_notes_v1';
 const notesLayer = document.getElementById('notesLayer');
-// Placement zones (percent of world size) — 只贴在上半部分的紫色背景区域，
-// 避开中间的猫和底部被桌子/桌布覆盖的区域：
-// 左墙、右墙（猫帽以上的高度），以及猫头顶上方的一条横带。
-const ZONES = [
+// ===== Creator Mode：模板形状拼贴 =====
+// 每个模板用网格字符画定义（X=一个便签格），新便签逐格填满、拼出形状；
+// 便签比格子大，互相叠压后呈现像素便签墙的效果。
+const SHAPES = {
+  heart: {
+    nameKey: 'tplHeart', descKey: 'tplHeartDesc', color: '#f2a5bb',
+    ox: 12, oy: 4, cw: 8, ch: 3.6,
+    grid: [
+      '.XX...XX.',
+      'XXXX.XXXX',
+      'XXXXXXXXX',
+      'XXXXXXXXX',
+      '.XXXXXXX.',
+      '..XXXXX..',
+      '...XXX...',
+      '....X....'
+    ]
+  },
+  paw: {
+    nameKey: 'tplPaw', descKey: 'tplPawDesc', color: '#f5c48a',
+    ox: 14, oy: 6, cw: 6, ch: 4.6,
+    grid: [
+      '.X..X..X..X.',
+      '............',
+      '..XXXXXX....',
+      '..X....X....',
+      '..XXXXXX....'
+    ]
+  },
+  p: {
+    nameKey: 'tplP', descKey: 'tplPDesc', color: '#b3a1e8',
+    ox: 30, oy: 5, cw: 6.8, ch: 4,
+    grid: [
+      'XXXXX.',
+      'X....X',
+      'X....X',
+      'XXXXX.',
+      'X.....',
+      'X.....',
+      'X.....'
+    ]
+  }
+};
+const SHAPE_KEY = 'paige_shape', SHAPE_FILL_KEY = 'paige_shape_fill';
+let activeShape = localStorage.getItem(SHAPE_KEY) || 'heart';
+let shapeFill = {};
+try { shapeFill = JSON.parse(localStorage.getItem(SHAPE_FILL_KEY) || '{}'); } catch { shapeFill = {}; }
+function gcd(a, b){ return b ? gcd(b, a % b) : a; }
+const shapeSlotCache = {};
+function slotsFor(id){
+  if (shapeSlotCache[id]) return shapeSlotCache[id];
+  const s = SHAPES[id];
+  const at = (r, c) => (s.grid[r] && s.grid[r][c]) === 'X';
+  const cells = [];
+  s.grid.forEach((row, r) => {
+    [...row].forEach((ch, col) => {
+      if (ch !== 'X') return;
+      // 只保留轮廓格（四邻居至少一个是空格），便签沿轮廓拼出形状剪影
+      const outline = !at(r - 1, col) || !at(r + 1, col) || !at(r, col - 1) || !at(r, col + 1);
+      if (outline) cells.push({ col, row: r });
+    });
+  });
+  // 沿轮廓环形排序（从顶部凹陷顺时针）：便签像描边一样逐张拼出形状
+  const cx = cells.reduce((a, c) => a + c.col, 0) / cells.length;
+  const cy = cells.reduce((a, c) => a + c.row, 0) / cells.length;
+  for (const c of cells) c._k = (Math.atan2(c.row - cy, c.col - cx) + Math.PI / 2 + Math.PI * 4) % (Math.PI * 2);
+  cells.sort((a, b) => a._k - b._k);
+  const slots = cells.map(c => ({ x: +(s.ox + c.col * s.cw).toFixed(1), y: +(s.oy + c.row * s.ch).toFixed(1) }));
+  shapeSlotCache[id] = slots;
+  return slots;
+}
+// 空白画布：旧的随机贴墙区域（左右墙高处 + 猫头顶横带）
+const BLANK_ZONES = [
   { x: [3, 24], y: [5, 36] },
   { x: [73, 94], y: [5, 36] },
   { x: [30, 66], y: [3, 15] }
 ];
-let zoneIdx = 0;
+let blankIdx = 0;
 function nextPos(){
-  const z = ZONES[zoneIdx % ZONES.length]; zoneIdx++;
+  if (activeShape === 'blank' || !SHAPES[activeShape]) {
+    const z = BLANK_ZONES[blankIdx++ % BLANK_ZONES.length];
+    return {
+      x: +(z.x[0] + Math.random() * (z.x[1] - z.x[0])).toFixed(1),
+      y: +(z.y[0] + Math.random() * (z.y[1] - z.y[0])).toFixed(1)
+    };
+  }
+  const slots = slotsFor(activeShape);
+  const i = shapeFill[activeShape] || 0;
+  shapeFill[activeShape] = i + 1;
+  localStorage.setItem(SHAPE_FILL_KEY, JSON.stringify(shapeFill));
+  const s = slots[i % slots.length];
+  const lap = Math.floor(i / slots.length);          // 填满一轮后抖动加大，微微错开叠放
+  const j = 0.4 + lap * 1.4;
   return {
-    x: +(z.x[0] + Math.random() * (z.x[1] - z.x[0])).toFixed(1),
-    y: +(z.y[0] + Math.random() * (z.y[1] - z.y[0])).toFixed(1)
+    x: +(s.x + (Math.random() * 2 - 1) * j).toFixed(1),
+    y: +(s.y + (Math.random() * 2 - 1) * j).toFixed(1)
   };
 }
 function onPurple(n){
   if (n.custom) return true;                            // 用户手动拖过的位置保留
   if (typeof n.x !== 'number' || typeof n.y !== 'number') return false;
-  if (n.y <= 36 && (n.x <= 26 || n.x >= 71)) return true;   // 左右墙高处
-  if (n.y <= 18 && n.x >= 28 && n.x <= 68) return true;      // 猫头顶横带
+  if (n.y >= 3 && n.y <= 45 && n.x >= 2 && n.x <= 92) return true;   // 紫色画布区（模板形状 + 空白区域）
   return false;
 }
 
@@ -291,12 +390,17 @@ for (const n of notes) {
   if (!onPurple(n)) { const p = nextPos(); n.x = p.x; n.y = p.y; n.rot = +(Math.random() * 6 - 3).toFixed(1); migrated = true; }
 }
 if (migrated) localStorage.setItem(NOTE_KEY, JSON.stringify(notes));
+// 老用户已有便签：计入当前模板的填充进度，新便签接着拼
+if (!localStorage.getItem(SHAPE_FILL_KEY) && notes.length) {
+  shapeFill[activeShape] = notes.length;
+  localStorage.setItem(SHAPE_FILL_KEY, JSON.stringify(shapeFill));
+}
 
 function saveNotes(){ localStorage.setItem(NOTE_KEY, JSON.stringify(notes)); }
 
 function makeSticky(note){
   const el = document.createElement('div');
-  el.className = `sticky q-${note.quadrant}` + (note.done ? ' done' : '');
+  el.className = `sticky q-${note.quadrant}` + (note.done ? ' done' : '') + (activeShape !== 'blank' ? ' mini' : '');
   el.style.left = note.x + '%'; el.style.top = note.y + '%';
   el.style.setProperty('--rot', (note.rot ?? 0) + 'deg');
   el.dataset.id = note.id;
@@ -381,7 +485,7 @@ function fitNote(el){
 window.addEventListener('resize', renderAll);   // 窗口尺寸变化时重新收敛
 
 // UI 元素上的按下不传给场景旋转（OrbitControls 挂在 .world 上，setPointerCapture 会吃掉 click）
-for (const sel of ['.board-legend', '.composer', '.footer-line', '.scene-bubble', '.brand', '.lang-toggle']) {
+for (const sel of ['.board-legend', '.composer', '.footer-line', '.scene-bubble', '.brand', '.lang-toggle', '.creator-btn', '.creator-panel']) {
   const uiEl = document.querySelector(sel);
   if (uiEl) uiEl.addEventListener('pointerdown', e => e.stopPropagation());
 }
@@ -406,8 +510,51 @@ function addNotes(incoming){
 document.getElementById('clearBoard').onclick = () => {
   if (!notes.length) return;
   notes = []; saveNotes(); renderAll();
+  shapeFill = {}; localStorage.setItem(SHAPE_FILL_KEY, '{}');   // 模板从头开始拼
   showBubble(t('cleared'), 'happy', false, 5000);
 };
+
+// ===== Creator Mode 弹窗：模板画廊 =====
+const creatorOverlay = document.getElementById('creatorOverlay');
+const creatorCards = document.getElementById('creatorCards');
+function pixelPreview(s){
+  if (!s) return '<div class="tpl-blank-art">✦</div>';
+  const cols = Math.max(...s.grid.map(r => r.length));
+  let cells = '';
+  for (const row of s.grid) {
+    for (const c of row.padEnd(cols, '.')) cells += `<i${c === 'X' ? ` style="background:${s.color}"` : ''}></i>`;
+  }
+  return `<div class="tpl-pixel" style="grid-template-columns:repeat(${cols},8px)">${cells}</div>`;
+}
+function buildCreatorCards(){
+  creatorCards.innerHTML = '';
+  for (const [id, s] of [...Object.entries(SHAPES), ['blank', null]]) {
+    const active = id === activeShape;
+    const card = document.createElement('div');
+    card.className = 'tpl-card' + (active ? ' active' : '');
+    const nameKey = s ? s.nameKey : 'tplBlank', descKey = s ? s.descKey : 'tplBlankDesc';
+    card.innerHTML = `${pixelPreview(s)}<h3>${esc(t(nameKey))}</h3><p>${esc(t(descKey))}</p>` +
+      `<button class="tpl-use"${active ? ' disabled' : ''}>${esc(t(active ? 'tplActive' : 'useTpl'))}</button>`;
+    if (!active) card.querySelector('.tpl-use').onclick = () => selectShape(id);
+    creatorCards.appendChild(card);
+  }
+}
+function selectShape(id){
+  activeShape = id;
+  localStorage.setItem(SHAPE_KEY, id);
+  creatorOverlay.classList.remove('show');
+  updateShapeChip();
+  renderAll();                       // 便签随模板切换迷你/常规样式
+  showBubble(t('tplSwitched'), 'happy', false, 5000);
+}
+function updateShapeChip(){
+  const s = SHAPES[activeShape];
+  document.getElementById('shapeChip').textContent = '🧩 ' + (s ? t(s.nameKey) : t('tplBlank'));
+}
+document.getElementById('creatorBtn').onclick = () => { buildCreatorCards(); creatorOverlay.classList.add('show'); };
+document.getElementById('shapeChip').onclick = document.getElementById('creatorBtn').onclick;
+document.getElementById('creatorClose').onclick = () => creatorOverlay.classList.remove('show');
+creatorOverlay.addEventListener('pointerdown', e => { if (e.target === creatorOverlay) creatorOverlay.classList.remove('show'); });
 
 // ===== 应用语言：刷新所有静态文案 + 重渲染便签（tooltip 随语言更新） =====
 const langToggle = document.getElementById('langToggle');
@@ -421,6 +568,7 @@ function applyLang(){
   if (!loaderEl.classList.contains('done')) loadDetail.textContent = t('loadingDetail');
   if (window.__rec) window.__rec.lang = LANG === 'zh' ? 'zh-CN' : 'en-US';
   if (mode.dataset.demo !== '0') mode.textContent = t('modeLocal');
+  updateShapeChip();
   renderAll();
 }
 langToggle.onclick = () => {

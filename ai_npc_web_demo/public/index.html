@@ -19,6 +19,7 @@
     <section class="world" id="world">
       <div class="noise"></div>
       <div class="brand"><span class="sigil">✦</span> <span data-i18n="brand">Paige的便利贴</span></div>
+      <button class="creator-btn" id="creatorBtn" type="button" data-i18n="creatorBtn">🎨 创作者</button>
       <button class="lang-toggle" id="langToggle" type="button" title="Switch language / 切换语言">EN</button>
       <div class="model-wrap" id="modelWrap">
         <div class="loader" id="loader"><div class="orb"></div><span data-i18n="loading">召唤角色中…</span><small id="loadDetail">载入 3D 模型</small></div>
@@ -34,6 +35,7 @@
       <div class="notes-layer" id="notesLayer"></div>
       <div class="board-legend">
         <span class="lg lg-donow" data-i18n="legendDonow">🔥 先做</span><span class="lg lg-plan" data-i18n="legendPlan">🌱 计划</span><span class="lg lg-quick" data-i18n="legendQuick">⚡ 速办</span><span class="lg lg-someday" data-i18n="legendSomeday">☁️ 改天</span>
+        <button id="shapeChip" class="shape-chip" type="button" title="Creator Mode">🧩 爱心 ♡</button>
         <button id="clearBoard" class="clear-btn" data-i18n="clear" data-i18n-title="clearTitle" title="清空全部便签">清空</button>
       </div>
 
@@ -48,6 +50,16 @@
       <div class="messages" id="messages" hidden></div>
     </section>
   </main>
+
+  <!-- Creator Mode：模板画廊弹窗 -->
+  <div class="creator-overlay" id="creatorOverlay">
+    <div class="creator-panel">
+      <button class="creator-close" id="creatorClose" type="button">✕</button>
+      <h2 class="creator-title" data-i18n="creatorTitle">✦ Creator Mode</h2>
+      <p class="creator-sub" data-i18n="creatorSub">用便签拼出喜欢的形状</p>
+      <div class="creator-cards" id="creatorCards"></div>
+    </div>
+  </div>
 
   <!-- 油画风格化滤镜：湍流位移模拟笔触 -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
