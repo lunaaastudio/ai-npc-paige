@@ -67,7 +67,7 @@ const loaderEl = document.getElementById('loader');
 const loadDetail = document.getElementById('loadDetail');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
-camera.position.set(0, .60, 2.55);
+camera.position.set(0, .85, 2.55);
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -100,7 +100,7 @@ const controls = new OrbitControls(camera, wrap.parentElement);
 controls.enablePan = false; controls.enableDamping = true; controls.dampingFactor = .055;
 controls.enableRotate = false; // 镜头锁定：不允许转动
 controls.enableZoom = false;   // 大小锁定：不允许缩放
-controls.minDistance = 1.5; controls.maxDistance = 3.4; controls.target.set(0,.70,0);
+controls.minDistance = 1.5; controls.maxDistance = 3.4; controls.target.set(0,.82,0);
 controls.autoRotate = false;
 let character = null;
 let mixer = null;
