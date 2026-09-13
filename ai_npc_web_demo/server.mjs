@@ -154,7 +154,8 @@ function localPaige(rawInput) {
       .replace(/^(我?(?:得|要|想|需要|应该|必须|打算)|记得|别忘了|别忘记|please|i (?:need|have|want|plan) to|remember to)\s*/i, '')
       .trim();
     if (!title) title = fragments[i];
-    if (title.length > 26) title = title.slice(0, 25) + '…';
+    const maxLen = zh ? 26 : 60;
+    if (title.length > maxLen) title = title.slice(0, maxLen - 1) + '…';
 
     const urgent = isUrgent(fragments[i]);
     const imp = importance(fragments[i]);
