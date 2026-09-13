@@ -79,7 +79,7 @@ body{overflow:hidden}.shell{height:100vh;display:grid;grid-template-columns:minm
 
 /* ===== Sticky notes pinned on the world background ===== */
 .notes-layer{position:absolute;inset:0;z-index:1;pointer-events:none}
-.sticky{position:absolute;pointer-events:auto;width:clamp(240px,26vw,320px);background:#fdf6dc;border-radius:3px;padding:26px 17px 15px;box-shadow:0 8px 18px rgba(90,70,40,.26),0 1px 3px rgba(90,70,40,.18);transform:rotate(var(--rot,0deg));transition:transform .18s,box-shadow .18s;animation:sticky-pop .3s cubic-bezier(.2,1.3,.4,1) both}
+.sticky{position:absolute;pointer-events:auto;width:clamp(190px,19vw,250px);background:#fdf6dc;border-radius:3px;padding:26px 17px 15px;box-shadow:0 8px 18px rgba(90,70,40,.26),0 1px 3px rgba(90,70,40,.18);transform:rotate(var(--rot,0deg));transition:transform .18s,box-shadow .18s;animation:sticky-pop .3s cubic-bezier(.2,1.3,.4,1) both}
 @keyframes sticky-pop{from{opacity:0;transform:rotate(var(--rot,0deg)) scale(.8)}to{opacity:1;transform:rotate(var(--rot,0deg)) scale(1)}}
 .sticky:hover{transform:rotate(0deg) scale(1.05);box-shadow:0 12px 24px rgba(90,70,40,.34);z-index:5}
 /* curled paper corner */
